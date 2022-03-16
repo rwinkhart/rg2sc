@@ -11,9 +11,9 @@
 # published by the Free Software Foundation (or at your option, any
 # latter version)
 
-import sys, os
+import os
 import argparse
-from mutagen.id3 import ID3, COMM, RVA2
+from mutagen.id3 import ID3
 import mutagen
 
 global args
