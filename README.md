@@ -1,4 +1,4 @@
-# rgToSc
+# rg2sc
 Add iTunes Sound Check metadata from ReplayGain metadata.
 
 You might want to do this for taking advantage of ReplayGain data on Apple devices, such as iPods.
