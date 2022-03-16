@@ -1,31 +1,15 @@
-# -*- coding: utf-8 -*-
-#
-# rgToSc.py
+#!/bin/python3
 #
 # Add iTunes SoundCheck meta-data from Replay Gain meta-data.
 #
-# Adapted from rg2sc.py by:
+# Originally Adapted from rg2c.py by:
 # Copyright © 2010 Rogério Theodoro de Brito
+# And further adapted from rgToSc by stu247 (https://github.com/stu247)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation (or at your option, any
 # latter version)
-#
-# References:
-#
-# * http://www.hydrogenaudio.org/forums/index.php?showtopic=24620
-# * http://www.id3.org/iTunes_Normalization_settings
-#
-# Summary (oversimplified):
-#
-# The tag is composed of 5 pairs of integers, written in base 16:
-#
-# * 1st pair: the value 1000 * 10^{-gain/10} (twice)
-# * 2nd pair: the value 2500 * 10^{-gain/10} (twice)
-# * 3rd pair: unknown data, probably for statistical purposes
-# * 4th pair: the absolute value of the peak sample (twice)
-# * 5th pair: unknown data, as the 3rd pair
 
 import sys, os
 import argparse
@@ -93,7 +77,7 @@ def write_soundcheck(file):
         " 00000000", # bogus
         " 00000000", # bogus
         ]
-             
+
     audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
     audio.save()
 
