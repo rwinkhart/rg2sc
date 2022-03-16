@@ -18,12 +18,15 @@ import mutagen
 
 global args
 
+
 def gain_to_watts(gain):
     return pow(10, -gain*.1)
+
 
 def to_hexstring(x):
     # leading space required; blame Apple
     return " %08X" % int(x)
+
 
 def write_soundcheck(file):
     try:
@@ -70,12 +73,12 @@ def write_soundcheck(file):
         to_hexstring(1000 * gain_to_watts(gain)),
         to_hexstring(2500 * gain_to_watts(gain)),
         to_hexstring(2500 * gain_to_watts(gain)),
-        " 00000000", # bogus
-        " 00000000", # bogus
+        " 00000000",  # bogus
+        " 00000000",  # bogus
         to_hexstring(peak * (32*1024 - 1)),
         to_hexstring(peak * (32*1024 - 1)),
-        " 00000000", # bogus
-        " 00000000", # bogus
+        " 00000000",  # bogus
+        " 00000000",  # bogus
         ]
 
     audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
@@ -93,16 +96,15 @@ if it already exists in the file.
                         help='Music file or directory tree containing music files.')
     parser.add_argument('-f', '--force', action='store_true',
                         help='Update SoundCheck meta-data even if it already exists.')
-    args = parser.parse_args();
+    args = parser.parse_args()
 
     # process the list of directories and files
     for arg in args.music_file_or_dir:
         if os.path.isdir(arg):
-            for dirpath, dirnames, filenames in os.walk(arg):
+            for dirPath, dirNames, filenames in os.walk(arg):
                 for filename in filenames:
-                    write_soundcheck(os.path.join(dirpath, filename))
+                    write_soundcheck(os.path.join(dirPath, filename))
         elif os.path.isfile(arg):
             write_soundcheck(arg)
         else:
             print("Error: %s is not a file or directory." % arg)
-
