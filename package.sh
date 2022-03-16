@@ -6,6 +6,17 @@ echo -e '\n\nThe value entered in this field will only affect the version report
 read -r -p "Version number: " version
 read -r -p "Revision number: " revision
 
+echo -e '\nOptions (please enter the number only):'
+echo -e '\n1. GitHub Release Tag\n2. Local\n'
+read -r -p "Source (for build scripts): " source
+
+if [ "$source" == "1" ]; then
+    source='https://github.com/rwinkhart/rg2sc/releases/download/v$pkgver/rg2sc-$pkgver.tar.xz'
+else
+    source=local://sshyp-"$version".tar.xz
+fi
+
+
 # Archive creation
 echo -e '\nPackaging as generic...\n'
 mkdir -p packages/archtemp/usr
