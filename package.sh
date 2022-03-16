@@ -13,7 +13,7 @@ read -r -p "Source (for build scripts): " source
 if [ "$source" == "1" ]; then
     source='https://github.com/rwinkhart/rg2sc/releases/download/v$pkgver/rg2sc-$pkgver.tar.xz'
 else
-    source=local://sshyp-"$version".tar.xz
+    source=local://rg2sc-"$version".tar.xz
 fi
 
 
@@ -22,9 +22,9 @@ echo -e '\nPackaging as generic...\n'
 mkdir -p packages/archtemp/usr
 cp -r bin packages/archtemp/usr/
 cp -r share packages/archtemp/usr/
-tar -C packages/archtemp -cvf packages/sshyp-"$version".tar.xz usr/
+tar -C packages/archtemp -cvf packages/rg2sc-"$version".tar.xz usr/
 rm -rf packages/archtemp
-sha512="$(sha512sum packages/sshyp-"$version".tar.xz | awk '{print $1;}')"
+sha512="$(sha512sum packages/rg2sc-"$version".tar.xz | awk '{print $1;}')"
 echo -e "\nsha512 sum:\n$sha512"
 echo -e "\nGeneric packaging complete.\n"
 
@@ -46,7 +46,7 @@ sha512sums=('"$sha512"')
 
 package() {
 
-    tar xf sshyp-"\"\$pkgver\"".tar.xz -C "\"\${pkgdir}\""
+    tar xf rg2sc-"\"\$pkgver\"".tar.xz -C "\"\${pkgdir}\""
 
 }
 " > packages/PKGBUILD
