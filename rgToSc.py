@@ -83,6 +83,7 @@ def write_soundcheck(file):
 
     audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
     audio.save()
+    print('Values successfully converted.')
 
 
 if __name__ == "__main__":
