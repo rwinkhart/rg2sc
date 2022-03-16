@@ -13,7 +13,7 @@
 
 import os
 import argparse
-from mutagen.id3 import ID3
+from mutagen.id3 import ID3, COMM
 import mutagen
 
 global args
