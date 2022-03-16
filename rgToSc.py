@@ -50,7 +50,7 @@ def write_soundcheck(file):
         return
     else:
         try:
-            gain = float(str(rggain).translate(None, ' dB'))
+            gain = float(str(rggain)[:-3])
         except:
             print('Error: ReplayGain gain not valid (%s)' % rggain)
             return
