@@ -86,7 +86,8 @@ def write_soundcheck(file):
         ]
 
     audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
-    audio.save()
+    audio.update_to_v23()
+    audio.save(v2_version=3)
     print('Values successfully converted.')
 
 
