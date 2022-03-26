@@ -46,6 +46,8 @@ def write_soundcheck(file):
     print(file)
     rggain = audio.get(u"TXXX:replaygain_track_gain")
     if rggain is None:
+        rggain = audio.get(u"TXXX:REPLAYGAIN_TRACK_GAIN")
+    if rggain is None:
         print('Error: could not find ReplayGain gain')
         return
     else:
@@ -56,6 +58,8 @@ def write_soundcheck(file):
             return
 
     rgpeak = audio.get(u"TXXX:replaygain_track_peak")
+    if rgpeak is None:
+        rgpeak = audio.get(u"TXXX:REPLAYGAIN_TRACK_PEAK")
     if rgpeak is None:
         print('Error: could not find ReplayGain peak')
         return
