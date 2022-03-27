@@ -86,6 +86,11 @@ def write_soundcheck(file):
         ]
 
     audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
+    if args.strip:
+        for _tag in audio.pprint().split('\n'):
+            if _tag.startswith('TXXX'):
+                _txxx_tag = _tag.replace('=', ':', 1).split('=', 1)[0]
+                audio.pop(_txxx_tag)
     audio.update_to_v23()
     audio.save(v2_version=3)
     print('Values successfully converted.')
@@ -95,13 +100,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''
 Add iTunes SoundCheck meta-data from Replay Gain meta-data.
 Replay Gain data is read from ID3v2 TXXX frames and SoundCheck data is stored
-in iTunNORM COMM frame.  By default, the script does not update SoundCheck data
+in iTunNORM COMM frame. By default, the script does not update SoundCheck data
 if it already exists in the file.
 ''')
     parser.add_argument('music_file_or_dir', nargs='+',
                         help='Music file or directory tree containing music files.')
     parser.add_argument('-f', '--force', action='store_true',
                         help='Update SoundCheck meta-data even if it already exists.')
+    parser.add_argument('-s', '--strip', action='store_true',
+                        help='Strip all TXXX tags from the output files.')
     args = parser.parse_args()
 
     # process the list of directories and files
