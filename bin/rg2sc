@@ -19,6 +19,15 @@ import mutagen
 global args
 
 
+def strip_txxx_apic(_audio):
+    for _tag in _audio.pprint().split('\n'):
+        if _tag.startswith('TXXX'):
+            _txxx_tag = _tag.replace('=', ':', 1).split('=', 1)[0]
+            _audio.pop(_txxx_tag)
+        if _tag.startswith('APIC'):
+            _audio.delall('APIC')
+
+
 def gain_to_watts(gain):
     return pow(10, -gain*.1)
 
@@ -33,6 +42,13 @@ def write_soundcheck(file):
         audio = ID3(file)
     except mutagen.id3.error:
         print('Not an ID3 file (%s)' % file)
+        return
+
+    if args.strip and not args.force:
+        strip_txxx_apic(audio)
+        audio.update_to_v23()
+        audio.save(v2_version=3)
+        print('TXXX and APIC tags successfully stripped.')
         return
 
     # The format of the key is different between GNU/Linux and Windows!
@@ -77,23 +93,22 @@ def write_soundcheck(file):
         to_hexstring(1000 * gain_to_watts(gain)),
         to_hexstring(2500 * gain_to_watts(gain)),
         to_hexstring(2500 * gain_to_watts(gain)),
-        " 00000000",  # bogus
-        " 00000000",  # bogus
+        " 00000000",
+        " 00000000",
         to_hexstring(peak * (32*1024 - 1)),
         to_hexstring(peak * (32*1024 - 1)),
-        " 00000000",  # bogus
-        " 00000000",  # bogus
+        " 00000000",
+        " 00000000",
         ]
 
     audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
     if args.strip:
-        for _tag in audio.pprint().split('\n'):
-            if _tag.startswith('TXXX'):
-                _txxx_tag = _tag.replace('=', ':', 1).split('=', 1)[0]
-                audio.pop(_txxx_tag)
+        strip_txxx_apic(audio)
     audio.update_to_v23()
     audio.save(v2_version=3)
-    print('Values successfully converted.')
+    if args.strip:
+        print('TXXX and APIC tags successfully stripped.')
+    print('ReplayGain values successfully converted.')
 
 
 if __name__ == "__main__":
@@ -108,7 +123,7 @@ if it already exists in the file.
     parser.add_argument('-f', '--force', action='store_true',
                         help='Update SoundCheck meta-data even if it already exists.')
     parser.add_argument('-s', '--strip', action='store_true',
-                        help='Strip all TXXX tags from the output files.')
+                        help='Strip all TXXX tags from the output files (will not write SoundCheck tags without -f).')
     args = parser.parse_args()
 
     # process the list of directories and files
