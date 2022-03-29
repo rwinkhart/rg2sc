@@ -1,31 +1,41 @@
 #!/bin/python3
 #
-# Add iTunes SoundCheck meta-data from Replay Gain meta-data.
+# Add iTunes SoundCheck metadata from Replay Gain metadata.
 #
 # Originally Adapted from rg2c.py by:
-# Copyright © 2010 Rogério Theodoro de Brito
-# And further adapted from rgToSc by stu247 (https://github.com/stu247)
+# Rogério Theodoro de Brito (Copyright © 2010)
+# And further adapted from stu247's (https://github.com/stu247) rgToSc
+#
+# rwinkhart additions over upstream:
+# - fixes for deprecated code
+# - MP4/M4A support
+# - support for all-caps ReplayGain tags
+# - Option to strip tags unnecessary for older iPods
+# - Various other optimizations
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation (or at your option, any
-# latter version)
+# later version)
 
-import os
-import argparse
-from mutagen.id3 import ID3, COMM
-import mutagen
-
-global args
+from argparse import ArgumentParser
+from mutagen.id3 import COMM, error as id3error, ID3
+from mutagen.mp4 import error as mp4error, MP4
+from os import path, walk
 
 
-def strip_txxx_apic(_audio):
+def strip_txxx_apic_mp3(_audio):
     for _tag in _audio.pprint().split('\n'):
         if _tag.startswith('TXXX'):
             _txxx_tag = _tag.replace('=', ':', 1).split('=', 1)[0]
             _audio.pop(_txxx_tag)
         if _tag.startswith('APIC'):
             _audio.delall('APIC')
+
+
+def strip_covr_mp4(_audio):
+    if _audio.get('covr'):
+        _audio.pop('covr')
 
 
 def gain_to_watts(gain):
@@ -38,53 +48,93 @@ def to_hexstring(x):
 
 
 def write_soundcheck(file):
-    try:
-        audio = ID3(file)
-    except mutagen.id3.error:
-        print('Not an ID3 file (%s)' % file)
-        return
+    if args.mp3:
+        try:
+            audio = ID3(file)
+        except id3error:
+            print('Not an ID3 file (%s)' % file)
+            return
 
-    if args.strip and not args.force:
-        strip_txxx_apic(audio)
-        audio.update_to_v23()
-        audio.save(v2_version=3)
-        print('TXXX and APIC tags successfully stripped.')
-        return
+        if args.strip and not args.force:
+            strip_txxx_apic_mp3(audio)
+            audio.update_to_v23()
+            audio.save(v2_version=3)
+            print('TXXX and APIC tags successfully stripped.')
+            return
 
-    # The format of the key is different between GNU/Linux and Windows!
-    if not args.force and (audio.get(u"COMM:iTunNORM:'eng'") or
-                           audio.get(u"COMM:iTunNORM:eng")):
-        # the file already has iTunNORM, by default, do not touch the file
-        return
+        # The format of the key is different between GNU/Linux and Windows!
+        if not args.force and (audio.get(u"COMM:iTunNORM:'eng'") or
+                               audio.get(u"COMM:iTunNORM:eng")):
+            # the file already has iTunNORM, by default, do not touch the file
+            return
+    else:
+        try:
+            audio = MP4(file)
+        except mp4error:
+            print('Not an MP4 file (%s)' % file)
+            return
+
+        if args.strip and not args.force:
+            strip_covr_mp4(audio)
+            audio.save()
+            print('covr tags successfully stripped.')
+            return
+
+        if not args.force and (audio.get('----:com.apple.iTunes:iTunNorm')):
+            # the file already has iTunNORM, by default, do not touch the file
+            return
 
     # get the values
 
     print(file)
-    rggain = audio.get(u"TXXX:replaygain_track_gain")
-    if rggain is None:
-        rggain = audio.get(u"TXXX:REPLAYGAIN_TRACK_GAIN")
-    if rggain is None:
-        print('Error: could not find ReplayGain gain')
-        return
-    else:
-        try:
-            gain = float(str(rggain)[:-3])
-        except:
-            print('Error: ReplayGain gain not valid (%s)' % rggain)
+    if args.mp3:
+        rggain = audio.get(u"TXXX:replaygain_track_gain")
+        if rggain is None:
+            rggain = audio.get(u"TXXX:REPLAYGAIN_TRACK_GAIN")
+        if rggain is None:
+            print('Error: could not find ReplayGain gain')
             return
+        else:
+            try:
+                gain = float(str(rggain)[:-3])
+            except ValueError:
+                print('Error: ReplayGain gain not valid (%s)' % rggain)
+                return
 
-    rgpeak = audio.get(u"TXXX:replaygain_track_peak")
-    if rgpeak is None:
-        rgpeak = audio.get(u"TXXX:REPLAYGAIN_TRACK_PEAK")
-    if rgpeak is None:
-        print('Error: could not find ReplayGain peak')
-        return
-    else:
-        try:
-            peak = float(str(rgpeak))
-        except:
-            print('Error: ReplayGain peak not valid (%s)' % rgpeak)
+        rgpeak = audio.get(u"TXXX:replaygain_track_peak")
+        if rgpeak is None:
+            rgpeak = audio.get(u"TXXX:REPLAYGAIN_TRACK_PEAK")
+        if rgpeak is None:
+            print('Error: could not find ReplayGain peak')
             return
+        else:
+            try:
+                peak = float(str(rgpeak))
+            except ValueError:
+                print('Error: ReplayGain peak not valid (%s)' % rgpeak)
+                return
+    else:
+        rggain = audio.get('----:com.apple.iTunes:replaygain_track_gain')
+        if rggain is None:
+            print('Error: could not find ReplayGain gain')
+            return
+        else:
+            try:
+                gain = float(str(rggain).split("'")[1][:-3])
+            except ValueError:
+                print('Error: ReplayGain gain not valid (%s)' % rggain)
+                return
+
+        rgpeak = audio.get('----:com.apple.iTunes:replaygain_track_peak')
+        if rgpeak is None:
+            print('Error: could not find ReplayGain peak')
+            return
+        else:
+            try:
+                peak = float(str(rgpeak).split("'")[1])
+            except ValueError:
+                print('Error: ReplayGain gain not valid (%s)' % rgpeak)
+                return
 
     # write the values
 
@@ -100,20 +150,27 @@ def write_soundcheck(file):
         " 00000000",
         " 00000000",
         ]
-
-    audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
-    if args.strip:
-        strip_txxx_apic(audio)
-    audio.update_to_v23()
-    audio.save(v2_version=3)
-    if args.strip:
-        print('TXXX and APIC tags successfully stripped.')
+    if args.mp3:
+        audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
+        if args.strip:
+            strip_txxx_apic_mp3(audio)
+        audio.update_to_v23()
+        audio.save(v2_version=3)
+        if args.strip:
+            print('TXXX and APIC tags successfully stripped.')
+    else:
+        audio.tags['----:com.apple.iTunes:iTunNorm'] = "".join(values).encode('utf-8')
+        if args.strip:
+            strip_covr_mp4(audio)
+        audio.save()
+        if args.strip:
+            print('covr tags successfully stripped.')
     print('ReplayGain values successfully converted.')
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='''
-Add iTunes SoundCheck meta-data from Replay Gain meta-data.
+    parser = ArgumentParser(description='''
+Add iTunes SoundCheck metadata from Replay Gain metadata.
 Replay Gain data is read from ID3v2 TXXX frames and SoundCheck data is stored
 in iTunNORM COMM frame. By default, the script does not update SoundCheck data
 if it already exists in the file.
@@ -121,18 +178,21 @@ if it already exists in the file.
     parser.add_argument('music_file_or_dir', nargs='+',
                         help='Music file or directory tree containing music files.')
     parser.add_argument('-f', '--force', action='store_true',
-                        help='Update SoundCheck meta-data even if it already exists.')
+                        help='Update SoundCheck metadata even if it already exists.')
     parser.add_argument('-s', '--strip', action='store_true',
                         help='Strip all TXXX tags from the output files (will not write SoundCheck tags without -f).')
+    parser.add_argument('--mp3', action='store_true',
+                        help='Perform operations on .mp3 files, as opposed to the default .mp4 files.')
+
     args = parser.parse_args()
 
     # process the list of directories and files
     for arg in args.music_file_or_dir:
-        if os.path.isdir(arg):
-            for dirPath, dirNames, filenames in os.walk(arg):
+        if path.isdir(arg):
+            for dirPath, dirNames, filenames in walk(arg):
                 for filename in filenames:
-                    write_soundcheck(os.path.join(dirPath, filename))
-        elif os.path.isfile(arg):
+                    write_soundcheck(path.join(dirPath, filename))
+        elif path.isfile(arg):
             write_soundcheck(arg)
         else:
             print("Error: %s is not a file or directory." % arg)
