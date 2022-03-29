@@ -1,6 +1,6 @@
 #!/bin/python3
 #
-# Add iTunes SoundCheck metadata from Replay Gain metadata.
+# Add iTunes SoundCheck metadata from ReplayGain metadata.
 #
 # Originally Adapted from rg2c.py by:
 # Rogério Theodoro de Brito (Copyright © 2010)
@@ -169,20 +169,16 @@ def write_soundcheck(file):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description='''
-Add iTunes SoundCheck metadata from Replay Gain metadata.
-Replay Gain data is read from ID3v2 TXXX frames and SoundCheck data is stored
-in iTunNORM COMM frame. By default, the script does not update SoundCheck data
-if it already exists in the file.
-''')
+    parser = ArgumentParser(description='Add iTunes SoundCheck metadata from ReplayGain metadata.')
     parser.add_argument('music_file_or_dir', nargs='+',
-                        help='Music file or directory tree containing music files.')
+                        help='music file or directory tree containing music files')
     parser.add_argument('-f', '--force', action='store_true',
-                        help='Update SoundCheck metadata even if it already exists.')
+                        help='update SoundCheck metadata even if it already exists')
     parser.add_argument('-s', '--strip', action='store_true',
-                        help='Strip all TXXX tags from the output files (will not write SoundCheck tags without -f).')
+                        help='strip all TXXX, APIC, and covr tags from the output files '
+                             '(will not write SoundCheck tags without -f)')
     parser.add_argument('--mp3', action='store_true',
-                        help='Perform operations on .mp3 files, as opposed to the default .mp4 files.')
+                        help='perform operations on .mp3 files, as opposed to the default .m4a/.mp4 files')
 
     args = parser.parse_args()
 
