@@ -133,7 +133,7 @@ def write_soundcheck(file):
             try:
                 peak = float(str(rgpeak).split("'")[1])
             except ValueError:
-                print('Error: ReplayGain gain not valid (%s)' % rgpeak)
+                print('Error: ReplayGain peak not valid (%s)' % rgpeak)
                 return
 
     # write the values
