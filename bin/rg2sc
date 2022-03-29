@@ -80,7 +80,7 @@ def write_soundcheck(file):
             print('covr tags successfully stripped.')
             return
 
-        if not args.force and (audio.get('----:com.apple.iTunes:iTunNorm')):
+        if not args.force and (audio.get('----:com.apple.iTunes:iTunNORM')):
             # the file already has iTunNORM, by default, do not touch the file
             return
 
@@ -145,7 +145,7 @@ def write_soundcheck(file):
         if args.strip:
             print('TXXX and APIC tags successfully stripped.')
     else:
-        audio.tags['----:com.apple.iTunes:iTunNorm'] = "".join(values).encode('utf-8')
+        audio.tags['----:com.apple.iTunes:iTunNORM'] = "".join(values).encode('utf-8')
         if args.strip:
             strip_covr_mp4(audio)
         if audio.get('\xa9cmt')[0].startswith('FLAC2PODRG'):
