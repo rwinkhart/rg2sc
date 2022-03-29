@@ -88,53 +88,39 @@ def write_soundcheck(file):
 
     print(file)
     if args.mp3:
-        rggain = audio.get(u"TXXX:replaygain_track_gain")
-        if rggain is None:
-            rggain = audio.get(u"TXXX:REPLAYGAIN_TRACK_GAIN")
-        if rggain is None:
-            print('Error: could not find ReplayGain gain')
+        gain = float(str(audio.get(u"TXXX:replaygain_track_gain")[:-3]))
+        if gain is None:
+            gain = float(str(audio.get(u"TXXX:REPLAYGAIN_TRACK_GAIN")[:-3]))
+        if gain is None:
+            print('Error: could not find valid ReplayGain gain')
             return
-        else:
-            try:
-                gain = float(str(rggain)[:-3])
-            except ValueError:
-                print('Error: ReplayGain gain not valid (%s)' % rggain)
-                return
 
-        rgpeak = audio.get(u"TXXX:replaygain_track_peak")
-        if rgpeak is None:
-            rgpeak = audio.get(u"TXXX:REPLAYGAIN_TRACK_PEAK")
-        if rgpeak is None:
-            print('Error: could not find ReplayGain peak')
+        peak = float(str(audio.get(u"TXXX:replaygain_track_peak")))
+        if peak is None:
+            peak = float(str(audio.get(u"TXXX:REPLAYGAIN_TRACK_PEAK")))
+        if peak is None:
+            print('Error: could not find valid ReplayGain peak')
             return
-        else:
-            try:
-                peak = float(str(rgpeak))
-            except ValueError:
-                print('Error: ReplayGain peak not valid (%s)' % rgpeak)
-                return
     else:
-        rggain = audio.get('----:com.apple.iTunes:replaygain_track_gain')
-        if rggain is None:
-            print('Error: could not find ReplayGain gain')
+        try:
+            gain = float(str(audio.get('----:com.apple.iTunes:replaygain_track_gain').split("'")[1][:-3]))
+        except AttributeError:
+            gain = None
+            if audio.get('\xa9cmt')[0].startswith('FLAC2PODRG'):
+                gain = float(audio.get('\xa9cmt')[0].split('#')[1])
+        if gain is None:
+            print('Error: could not find valid ReplayGain gain')
             return
-        else:
-            try:
-                gain = float(str(rggain).split("'")[1][:-3])
-            except ValueError:
-                print('Error: ReplayGain gain not valid (%s)' % rggain)
-                return
 
-        rgpeak = audio.get('----:com.apple.iTunes:replaygain_track_peak')
-        if rgpeak is None:
-            print('Error: could not find ReplayGain peak')
+        try:
+            peak = float(str(audio.get('----:com.apple.iTunes:replaygain_track_peak').split("'")[1]))
+        except AttributeError:
+            peak = None
+            if audio.get('\xa9cmt')[0].startswith('FLAC2PODRG'):
+                peak = float(audio.get('\xa9cmt')[0].split('#')[2])
+        if peak is None:
+            print('Error: could not find valid ReplayGain peak')
             return
-        else:
-            try:
-                peak = float(str(rgpeak).split("'")[1])
-            except ValueError:
-                print('Error: ReplayGain peak not valid (%s)' % rgpeak)
-                return
 
     # write the values
 
@@ -162,6 +148,8 @@ def write_soundcheck(file):
         audio.tags['----:com.apple.iTunes:iTunNorm'] = "".join(values).encode('utf-8')
         if args.strip:
             strip_covr_mp4(audio)
+        if audio.get('\xa9cmt')[0].startswith('FLAC2PODRG'):
+            audio.pop('\xa9cmt')
         audio.save()
         if args.strip:
             print('covr tags successfully stripped.')
@@ -187,8 +175,14 @@ if __name__ == "__main__":
         if path.isdir(arg):
             for dirPath, dirNames, filenames in walk(arg):
                 for filename in filenames:
-                    write_soundcheck(path.join(dirPath, filename))
+                    try:
+                        write_soundcheck(path.join(dirPath, filename))
+                    except ValueError:
+                        print("Error: corrupted or invalid ReplayGain data is present")
         elif path.isfile(arg):
-            write_soundcheck(arg)
+            try:
+                write_soundcheck(arg)
+            except ValueError:
+                print("Error: corrupted or invalid ReplayGain data is present")
         else:
             print("Error: %s is not a file or directory." % arg)
