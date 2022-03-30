@@ -95,10 +95,10 @@ def write_soundcheck(file):
     print(file)
     if file.endswith('.mp3') or file.endswith('.MP3'):
         try:
-            gain = float(str(audio.get(u"TXXX:replaygain_track_gain")[:-3]))
+            gain = float(str(audio.get(u"TXXX:replaygain_track_gain")[0])[:-3])
         except (AttributeError, TypeError, ValueError):
             try:
-                gain = float(str(audio.get(u"TXXX:REPLAYGAIN_TRACK_GAIN")[:-3]))
+                gain = float(str(audio.get(u"TXXX:REPLAYGAIN_TRACK_GAIN")[0])[:-3])
             except (AttributeError, TypeError, ValueError):
                 pass
         if gain is None:
@@ -117,7 +117,7 @@ def write_soundcheck(file):
             return
     else:
         try:
-            gain = float(str(audio.get('----:com.apple.iTunes:replaygain_track_gain').split("'")[1][:-3]))
+            gain = float(str(audio.get('----:com.apple.iTunes:replaygain_track_gain').split("'")[1])[:-3])
         except (AttributeError, TypeError, ValueError):
             try:
                 if audio.get('\xa9cmt')[0].startswith('FLAC2PODRG'):
