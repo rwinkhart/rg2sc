@@ -31,11 +31,15 @@ def strip_txxx_apic_mp3(_audio):
             _audio.pop(_txxx_tag)
         if _tag.startswith('APIC'):
             _audio.delall('APIC')
+    return _audio
 
 
 def strip_covr_mp4(_audio):
     if _audio.get('covr'):
         _audio.pop('covr')
+    if _audio.get('\xa9lyr'):
+        _audio.pop('\xa9lyr')
+    return _audio
 
 
 def gain_to_watts(gain):
@@ -56,7 +60,7 @@ def write_soundcheck(file):
             return
 
         if args.strip and not args.force:
-            strip_txxx_apic_mp3(audio)
+            audio = strip_txxx_apic_mp3(audio)
             audio.update_to_v23()
             audio.save(v2_version=3)
             print('TXXX and APIC tags successfully stripped.')
@@ -75,7 +79,7 @@ def write_soundcheck(file):
             return
 
         if args.strip and not args.force:
-            strip_covr_mp4(audio)
+            audio = strip_covr_mp4(audio)
             audio.save()
             print('covr tags successfully stripped.')
             return
@@ -139,20 +143,18 @@ def write_soundcheck(file):
     if args.mp3:
         audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
         if args.strip:
-            strip_txxx_apic_mp3(audio)
+            audio = strip_txxx_apic_mp3(audio)
         audio.update_to_v23()
         audio.save(v2_version=3)
-        if args.strip:
-            print('TXXX and APIC tags successfully stripped.')
     else:
         audio.tags['----:com.apple.iTunes:iTunNORM'] = "".join(values).encode('utf-8')
         if args.strip:
-            strip_covr_mp4(audio)
+            audio = strip_covr_mp4(audio)
         if audio.get('\xa9cmt')[0].startswith('FLAC2PODRG'):
             audio.pop('\xa9cmt')
         audio.save()
-        if args.strip:
-            print('covr tags successfully stripped.')
+    if args.strip:
+        print('Unnecessary tags successfully stripped.')
     print('ReplayGain values successfully converted.')
 
 
