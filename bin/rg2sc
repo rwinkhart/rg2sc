@@ -52,7 +52,7 @@ def to_hexstring(x):
 
 
 def write_soundcheck(file):
-    if args.mp3:
+    if file.endswith('.mp3') or file.endswith('.MP3'):
         try:
             audio = ID3(file)
         except id3error:
@@ -93,7 +93,7 @@ def write_soundcheck(file):
     # get the values
     gain, peak = None, None
     print(file)
-    if args.mp3:
+    if file.endswith('.mp3') or file.endswith('.MP3'):
         try:
             gain = float(str(audio.get(u"TXXX:replaygain_track_gain")[:-3]))
         except (AttributeError, TypeError, ValueError):
@@ -102,7 +102,7 @@ def write_soundcheck(file):
             except (AttributeError, TypeError, ValueError):
                 pass
         if gain is None:
-            print('Error: could not find valid ReplayGain gain')
+            print('ID3 Error: could not find valid ReplayGain gain')
             return
 
         try:
@@ -113,7 +113,7 @@ def write_soundcheck(file):
             except (AttributeError, TypeError, ValueError):
                 pass
         if peak is None:
-            print('Error: could not find valid ReplayGain peak')
+            print('ID3 Error: could not find valid ReplayGain peak')
             return
     else:
         try:
@@ -125,7 +125,7 @@ def write_soundcheck(file):
             except (AttributeError, TypeError, ValueError):
                 pass
         if gain is None:
-            print('Error: could not find valid ReplayGain gain')
+            print('MP4 Error: could not find valid ReplayGain gain')
             return
 
         try:
@@ -137,7 +137,7 @@ def write_soundcheck(file):
             except (AttributeError, TypeError, ValueError):
                 pass
         if peak is None:
-            print('Error: could not find valid ReplayGain peak')
+            print('MP4 Error: could not find valid ReplayGain peak')
             return
 
     # write the values
@@ -154,7 +154,7 @@ def write_soundcheck(file):
         " 00000000",
         " 00000000",
         ]
-    if args.mp3:
+    if file.endswith('.mp3') or file.endswith('.MP3'):
         audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
         if args.strip:
             audio = strip_mp3(audio)
@@ -179,10 +179,8 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--force', action='store_true',
                         help='update SoundCheck metadata even if it already exists')
     parser.add_argument('-s', '--strip', action='store_true',
-                        help='strip all TXXX, APIC, and covr tags from the output files '
-                             '(will not write SoundCheck tags without -f)')
-    parser.add_argument('--mp3', action='store_true',
-                        help='perform operations on .mp3 files, as opposed to the default .m4a/.mp4 files')
+                        help='strip all unnecessary tags from the output files (intended for monochrome iPods)'
+                             ' (will not write SoundCheck tags without -f)')
 
     args = parser.parse_args()
 
@@ -194,6 +192,5 @@ if __name__ == "__main__":
                     write_soundcheck(path.join(dirPath, filename))
         elif path.isfile(arg):
             write_soundcheck(arg)
-
         else:
             print("Error: %s is not a file or directory." % arg)
