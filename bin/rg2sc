@@ -24,7 +24,7 @@ from mutagen.mp4 import error as mp4error, MP4
 from os import path, walk
 
 
-def strip_txxx_apic_mp3(_audio):
+def strip_mp3(_audio):
     for _tag in _audio.pprint().split('\n'):
         if _tag.startswith('TXXX'):
             _txxx_tag = _tag.replace('=', ':', 1).split('=', 1)[0]
@@ -34,7 +34,7 @@ def strip_txxx_apic_mp3(_audio):
     return _audio
 
 
-def strip_covr_mp4(_audio):
+def strip_mp4(_audio):
     if _audio.get('covr'):
         _audio.pop('covr')
     if _audio.get('\xa9lyr'):
@@ -60,7 +60,7 @@ def write_soundcheck(file):
             return
 
         if args.strip and not args.force:
-            audio = strip_txxx_apic_mp3(audio)
+            audio = strip_mp3(audio)
             audio.update_to_v23()
             audio.save(v2_version=3)
             print('TXXX and APIC tags successfully stripped.')
@@ -79,7 +79,7 @@ def write_soundcheck(file):
             return
 
         if args.strip and not args.force:
-            audio = strip_covr_mp4(audio)
+            audio = strip_mp4(audio)
             audio.save()
             print('covr tags successfully stripped.')
             return
@@ -143,13 +143,13 @@ def write_soundcheck(file):
     if args.mp3:
         audio.add(COMM(desc="iTunNORM", lang="eng", text="".join(values), encoding=3))
         if args.strip:
-            audio = strip_txxx_apic_mp3(audio)
+            audio = strip_mp3(audio)
         audio.update_to_v23()
         audio.save(v2_version=3)
     else:
         audio.tags['----:com.apple.iTunes:iTunNORM'] = "".join(values).encode('utf-8')
         if args.strip:
-            audio = strip_covr_mp4(audio)
+            audio = strip_mp4(audio)
         if audio.get('\xa9cmt')[0].startswith('FLAC2PODRG'):
             audio.pop('\xa9cmt')
         audio.save()
