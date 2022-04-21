@@ -22,6 +22,7 @@ from argparse import ArgumentParser
 from mutagen.id3 import COMM, error as id3error, ID3
 from mutagen.mp4 import error as mp4error, MP4
 from os import path, walk
+from sys import exit as s_exit
 
 
 def strip_mp3(_audio):
@@ -194,3 +195,5 @@ if __name__ == "__main__":
             write_soundcheck(arg)
         else:
             print("Error: %s is not a file or directory." % arg)
+
+    s_exit(0)
